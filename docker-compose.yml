@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:8.4
+    container_name: fc_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: nodedb
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-uroot",
+          "-prootpassword",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  app:
+    build: ./app
+    container_name: fc_app
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: rootpassword
+      DB_NAME: nodedb
+      DB_PORT: 3306
+    expose:
+      - "3000"
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+    command: npm run start
+
+  nginx:
+    build: ./nginx
+    container_name: fc_nginx
+    depends_on:
+      - app
+    ports:
+      - "8080:80"
+
+volumes:
+  db_data:
