@@ -29,7 +29,8 @@ services:
     build: ./app
     container_name: fc_app
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       DB_HOST: db
       DB_USER: root
